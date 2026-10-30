@@ -1,0 +1,45 @@
+name: Crear APK Android
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "ElBuenSaborAndroid-net10-corregido.zip"
+      - ".github/workflows/build-apk.yml"
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
+
+      - name: Preparar Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Preparar .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Descomprimir proyecto
+        shell: pwsh
+        run: |
+          Expand-Archive -Path ElBuenSaborAndroid-net10-corregido.zip -DestinationPath source -Force
+
+      - name: Instalar herramientas Android
+        run: dotnet workload install maui-android
+
+      - name: Compilar APK
+        run: dotnet publish source/ElBuenSaborAndroid/ElBuenSaborAndroid.csproj -f net10.0-android -c Debug -p:AndroidPackageFormat=apk
+
+      - name: Guardar APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: El-Buen-Sabor-APK
+          path: source/ElBuenSaborAndroid/bin/Debug/net10.0-android/**/*.apk
+          if-no-files-found: error
